@@ -25,9 +25,10 @@ library
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8
-                     , webdriver
                      , text
                      , bytestring
+                     , webdriver
+
   hs-source-dirs:      src
   default-language:    Haskell2010
 
@@ -36,8 +37,18 @@ executable selfie
   main-is:        Main.hs
   build-depends:
                  base >=4.7 && <4.8
+               , text
                , webdriver
+               , friday
+               , JuicyPixels
                , site-selfie
+               , time
+               , bytestring
+               , old-locale
+               , filepath
+               , directory
+               , transformers
+
 
   -- other-modules:
   -- other-extensions:
