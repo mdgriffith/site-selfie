@@ -69,7 +69,7 @@ data SSComparison = SSComparison { branch :: Page
                                  , screenshot2 :: Screenshot
                                  , screenshotDiff :: FilePath
                                  , percentDiff :: Float
-                                 }
+                                 } deriving (Show)
 
 ffWDConfig :: WDConfig
 ffWDConfig = defaultConfig { wdCapabilities = defaultCaps {browser = firefox}}
@@ -99,26 +99,6 @@ selfieConfig = SelfieConfig {
              }
 
 
--- selfieConfig :: SelfieConfig
--- selfieConfig = SelfieConfig {
---                 bases =  [ Base { baseName="Dev",  
---                                   url="http://localhost:8000/"
---                                 }
---                          , Base { baseName="Live", 
---                                   url="http://mechanical-elephant.com/"
---                                 }
---                          ]
---               , sitemap = [""]
---               , resolutions = [(1366, 768)]
---               , saveDir = "siteshots"
---               , webDriverConfigs = [ NamedWDConfig { configName="Firefox"
---                                                    , driverConfig=ffWDConfig
---                                                    }
---                                    ]
---              }
-
-
-
 toURL :: Base -> Page -> String
 toURL base page = (url base) ++ page
 
@@ -134,7 +114,7 @@ formatPath dir base page date res cfgName  = dir
 slugifyTime :: UTCTime -> String
 slugifyTime utc = formatTime defaultTimeLocale "%F_%H-%M-%S" utc
 
-
+tracePass a = traceShow a a
 
 -- Resolutions have to be the same to do a comparison
 -- Base and DriverConfigs can be different to compare
@@ -158,13 +138,14 @@ pairScreenshots screenshots = nubBy duplicates (concatMap findComparable screens
         duplicates :: (Screenshot, Screenshot) -> (Screenshot, Screenshot) -> Bool
         duplicates pair1 pair2 = pair1 == pair2 
                               || (fst pair1 == snd pair2 
-                                 && snd pair1 == fst pair2) 
+                                  && snd pair1 == fst pair2) 
 
 main :: IO ()
 main = do
          date <- getCurrentTime
          allScreenshots <- sequence $ runScreenshots date
          allComparisons <- sequence $ fmap compareScreenshots (pairScreenshots allScreenshots) 
+         
          return ()
     where 
           cfg = selfieConfig
@@ -181,9 +162,7 @@ saveScreenshot root utc namedCfg bse pge resolut = do
                 runSession config $ do
                     openPage pageUrl
                     setWindowSize resolut
-
-                    -- waitWhile 5.0 (waitUntil 4.0 (expect False)) --Let some of the resizing animations take place
-                    waitUntil 5.0 (expect False)
+                    waitUntil 1.5 (expect False) --Let some of the resizing animations take place
                           `onTimeout` return ()
                     ss <- screenshot
                     window <- getCurrentWindow
@@ -208,7 +187,7 @@ compareScreenshots :: (Screenshot, Screenshot) -> IO (Either String SSComparison
 compareScreenshots (ss1, ss2) = do
                     img1 <- readImage (filepath ss1) 
                     img2 <- readImage (filepath ss2)
-                    imgOrError <- writeImage (diffImages img1 img2)
+                    imgOrError <- writeImage (diffImages (stdImage img1) (stdImage img2))
                     return (prepareResult imgOrError)
 
     where 
@@ -232,13 +211,18 @@ compareScreenshots (ss1, ss2) = do
                                                        }
       prepareResult (Left err) = (Left err)
 
+      stdImage (Left err) = Left err
+      stdImage (Right (ImageRGBA8 img)) = Right $ ImageRGB8 (dropAlphaLayer img)
+      stdImage (Right (ImageRGB8 img)) = Right $ ImageRGB8 img
+      stdImage (Right _) = Left "Unreducible Format"
+
 
 
 
 
 diffImages :: Either String DynamicImage -> Either String DynamicImage 
            -> Either String (Image PixelRGBA8, Float)
-diffImages (Right (ImageRGBA8 img1)) (Right (ImageRGBA8 img2)) = Right $ (createImgDiff, calcDiffScore)
+diffImages (Right (ImageRGB8 img1)) (Right (ImageRGB8 img2)) = Right $ (createImgDiff, calcDiffScore)
 
   where height = max (imageHeight img1) (imageHeight img2)
         width  = max (imageWidth img1)  (imageWidth img2)
@@ -257,8 +241,8 @@ diffImages (Right (ImageRGBA8 img1)) (Right (ImageRGBA8 img2)) = Right $ (create
 
         alpha x y = gate (diffPixel (getPixel img1 x y) (getPixel img2 x y))
 
-        diffPixel :: PixelRGBA8 -> PixelRGBA8 -> Float
-        diffPixel (PixelRGBA8 r1 g1 b1 _) (PixelRGBA8 r2 g2 b2 _) = ((absDiff r1 r2) 
+        diffPixel :: PixelRGB8 -> PixelRGB8 -> Float
+        diffPixel (PixelRGB8 r1 g1 b1) (PixelRGB8 r2 g2 b2) = ((absDiff r1 r2) 
                                                                    + (absDiff g1 g2) 
                                                                    + (absDiff b1 b2)) / ((fromInteger (3*127))::Float)
 
@@ -269,10 +253,29 @@ diffImages (Right (ImageRGBA8 img1)) (Right (ImageRGBA8 img2)) = Right $ (create
                | imageHeight img <= y = outofBoundsPixel
                | imageWidth img <= x = outofBoundsPixel
                | otherwise = pixelAt img x y
-        outofBoundsPixel = PixelRGBA8 (127::Pixel8) (0::Pixel8) (0::Pixel8) (127::Pixel8)
+        outofBoundsPixel = PixelRGB8 (127::Pixel8) (0::Pixel8) (0::Pixel8)
         gate i = (round (127 * abs i))::Word8
+diffImages (Right img1) (Right img2) =  Left $ "Images are of type: " ++ (dynImageType img1) ++ ", " ++ (dynImageType img2)
+diffImages _ _ = Left $ "Images failed"
 
-diffImages _ _ = Left "Images are different formats"
+
+
+dynImageType :: DynamicImage -> String
+dynImageType (ImageY8 _) = "ImageY8"
+dynImageType (ImageY16 _) = "ImageY16"
+dynImageType (ImageYF _) = "ImageYF"
+dynImageType (ImageYA8 _) = "ImageYA8"
+dynImageType (ImageYA16 _) = "ImageYA16"
+dynImageType (ImageRGB8 _) = "ImageRGB8"
+dynImageType (ImageRGB16 _) = "ImageRGB16"
+dynImageType (ImageRGBF _) = "ImageRGBF"
+dynImageType (ImageRGBA8 _) = "ImageRGBA8"
+dynImageType (ImageRGBA16 _) = "ImageRGBA16"
+dynImageType (ImageYCbCr8 _) = "ImageYCbCr8"
+dynImageType (ImageCMYK8 _) = "ImageCMYK8"
+dynImageType (ImageCMYK16 _) = "ImageCMYK16"
+
+
 
 
 
