@@ -1,0 +1,43 @@
+body {
+  background-color:#DDD; 
+}
+
+.all-comparisons {
+  position:relative;
+  margin-left:40px;
+  margin-top:40px;
+
+}
+
+.comparison {
+  position:relative;
+  display:inline-block;
+  width:150px;
+  height:150px;
+  margin:15px;
+  overflow:hidden;
+}
+.img1 {
+  position: absolute;
+  left:0px;
+  top:0px;
+  width:100%;
+  height:auto;
+}
+.img2 {
+  position: absolute;
+  left:0px;
+  top:0px;
+  width:100%;
+  height:auto;
+}
+.img-diff {
+  position: absolute;
+  left:0px;
+  top:0px;
+  width:100%;
+  height:auto;
+}
+.description{
+  bottom:-20px;
+}

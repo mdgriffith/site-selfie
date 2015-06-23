@@ -1,11 +1,11 @@
-
+{-# LANGUAGE TemplateHaskell, QuasiQuotes #-}
 import System.FilePath
-import System.Directory (createDirectoryIfMissing)
+import System.Directory (createDirectoryIfMissing, copyFile)
 import System.Locale (defaultTimeLocale)
 import Data.Time.Format (formatTime)
 import Data.Time.Clock (getCurrentTime, UTCTime)
 import Data.Word
-import Data.List (nubBy, foldl')
+import Data.List (nubBy, foldl', sortBy)
 
 import qualified Data.ByteString.Lazy as L
 
@@ -19,7 +19,12 @@ import Test.WebDriver.Commands.Wait
 import Codec.Picture
 import Codec.Picture.Types
 
-import Debug.Trace
+
+import Data.Text hiding (foldl', zip, concatMap, filter)
+import Text.Blaze.Html.Renderer.String (renderHtml)
+import Text.Hamlet hiding (renderHtml)
+
+
 
 
 data Base = Base { baseName::String, url::String } deriving (Show, Eq)
@@ -111,10 +116,18 @@ formatPath dir base page date res cfgName  = dir
                       where nonEmpty "" = "index"
                             nonEmpty x = x
 
+formatFilename :: Screenshot -> FilePath
+formatFilename ss = (nonEmpty (page ss)) ++ "_"  ++ (showResolution (res ss))
+                      ++ "_" ++ (baseName (base ss)) 
+                      ++ "_" ++ (wdConfigName ss) <.> "png"
+                 where nonEmpty "" = "index"
+                       nonEmpty x = x
+
+
+
 slugifyTime :: UTCTime -> String
 slugifyTime utc = formatTime defaultTimeLocale "%F_%H-%M-%S" utc
 
-tracePass a = traceShow a a
 
 -- Resolutions have to be the same to do a comparison
 -- Base and DriverConfigs can be different to compare
@@ -145,8 +158,8 @@ main = do
          date <- getCurrentTime
          allScreenshots <- sequence $ runScreenshots date
          allComparisons <- sequence $ fmap compareScreenshots (pairScreenshots allScreenshots) 
-         
-         return ()
+         writeFile ((saveDir cfg) </> (slugifyTime date) </> "index.html") (renderComparisons allComparisons)
+         copyFile "style.css" ((saveDir cfg) </> (slugifyTime date) </> "style.css")
     where 
           cfg = selfieConfig
 
@@ -274,6 +287,39 @@ dynImageType (ImageRGBA16 _) = "ImageRGBA16"
 dynImageType (ImageYCbCr8 _) = "ImageYCbCr8"
 dynImageType (ImageCMYK8 _) = "ImageCMYK8"
 dynImageType (ImageCMYK16 _) = "ImageCMYK16"
+
+
+
+renderComparisons comps = renderHtml $ renderCompsTemplate (reverse (sortBy score comps))
+      where score (Right sc1) (Right sc2) = compare (percentDiff sc1) (percentDiff sc2)
+            score (Left _) (Right _) = LT
+            score (Right _) (Left _) = GT
+            score (Left _) (Left _) = EQ
+
+
+renderCompsTemplate comparisons = [shamlet|
+    $doctype 5
+    <html>
+        <header>
+           <link rel="stylesheet" type="text/css" href="style.css">
+        <head>
+            <title>View Comparisons
+        <body>
+          <div .all-comparisons>
+            $forall comparison <- comparisons
+              $case comparison
+                $of Left err
+                  <div .error>
+                    <div .descrption>
+                      #{err}
+                $of Right ssComparison
+                  <div .comparison>
+                    <img .img1 src="#{takeFileName (formatFilename (screenshot1 ssComparison))}" />
+                    <img .img2 src="#{takeFileName (filepath (screenshot2 ssComparison))}" />
+                    <img .img-diff src="#{takeFileName (screenshotDiff ssComparison)}" />
+                    <div .description>
+                      #{description ssComparison}
+  |]
 
 
 

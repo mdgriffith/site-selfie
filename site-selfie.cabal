@@ -48,6 +48,8 @@ executable selfie
                , filepath
                , directory
                , transformers
+               , shakespeare
+               , blaze-html
 
 
   -- other-modules:
