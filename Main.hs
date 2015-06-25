@@ -116,15 +116,6 @@ formatPath dir base page date res cfgName  = dir
                       where nonEmpty "" = "index"
                             nonEmpty x = x
 
-formatFilename :: Screenshot -> FilePath
-formatFilename ss = (nonEmpty (page ss)) ++ "_"  ++ (showResolution (res ss))
-                      ++ "_" ++ (baseName (base ss)) 
-                      ++ "_" ++ (wdConfigName ss) <.> "png"
-                 where nonEmpty "" = "index"
-                       nonEmpty x = x
-
-
-
 slugifyTime :: UTCTime -> String
 slugifyTime utc = formatTime defaultTimeLocale "%F_%H-%M-%S" utc
 
