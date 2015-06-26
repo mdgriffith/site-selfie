@@ -19,19 +19,6 @@ build-type:          Simple
 -- extra-source-files:  
 cabal-version:       >=1.10
 
-library
-  exposed-modules:   
-             SiteSelfie
-  -- other-modules:       
-  -- other-extensions:    
-  build-depends:       base >=4.7 && <4.8
-                     , text
-                     , bytestring
-                     , webdriver
-
-  hs-source-dirs:      src
-  default-language:    Haskell2010
-
 
 executable selfie
   main-is:        Main.hs
@@ -41,7 +28,6 @@ executable selfie
                , webdriver
                , friday
                , JuicyPixels
-               , site-selfie
                , time
                , bytestring
                , old-locale
