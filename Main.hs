@@ -97,9 +97,6 @@ selfieConfig = SelfieConfig {
               , webDriverConfigs = [ NamedWDConfig { configName="Firefox"
                                                    , driverConfig=ffWDConfig
                                                    }
-                                   , NamedWDConfig { configName="Chrome"
-                                                   , driverConfig=chromeWDConfig
-                                                   }
                                    ]
              }
 
@@ -151,6 +148,7 @@ main = do
          allComparisons <- sequence $ fmap compareScreenshots (pairScreenshots allScreenshots) 
          writeFile ((saveDir cfg) </> (slugifyTime date) </> "index.html") (renderComparisons allComparisons)
          copyFile "static/style.css" ((saveDir cfg) </> (slugifyTime date) </> "style.css")
+         copyFile "static/selfie-view.js" ((saveDir cfg) </> (slugifyTime date) </> "selfie-view.js")
     where 
           cfg = selfieConfig
 
@@ -281,7 +279,7 @@ dynImageType (ImageCMYK16 _) = "ImageCMYK16"
 
 
 
-renderComparisons comps = renderHtml $ renderCompsTemplate (reverse (sortBy score comps))
+renderComparisons comps = renderHtml $ renderCompsTemplate (Prelude.reverse (sortBy score comps))
       where score (Right sc1) (Right sc2) = compare (percentDiff sc1) (percentDiff sc2)
             score (Left _) (Right _) = LT
             score (Right _) (Left _) = GT
@@ -293,9 +291,12 @@ renderCompsTemplate comparisons = [shamlet|
     <html>
         <header>
            <link rel="stylesheet" type="text/css" href="style.css">
+           <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+           <script src="selfie-view.js"></script>
         <head>
             <title>View Comparisons
         <body>
+          <div .backdrop>
           <div .all-comparisons>
             $forall comparison <- comparisons
               $case comparison
@@ -305,7 +306,7 @@ renderCompsTemplate comparisons = [shamlet|
                       #{err}
                 $of Right ssComparison
                   <div .comparison>
-                    <img .img1 src="#{takeFileName (formatFilename (screenshot1 ssComparison))}" />
+                    <img .img1 src="#{takeFileName (filepath (screenshot1 ssComparison))}" />
                     <img .img2 src="#{takeFileName (filepath (screenshot2 ssComparison))}" />
                     <img .img-diff src="#{takeFileName (screenshotDiff ssComparison)}" />
                     <div .description>
