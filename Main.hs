@@ -150,7 +150,7 @@ main = do
          allScreenshots <- sequence $ runScreenshots date
          allComparisons <- sequence $ fmap compareScreenshots (pairScreenshots allScreenshots) 
          writeFile ((saveDir cfg) </> (slugifyTime date) </> "index.html") (renderComparisons allComparisons)
-         copyFile "style.css" ((saveDir cfg) </> (slugifyTime date) </> "style.css")
+         copyFile "static/style.css" ((saveDir cfg) </> (slugifyTime date) </> "style.css")
     where 
           cfg = selfieConfig
 
