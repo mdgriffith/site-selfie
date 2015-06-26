@@ -1,0 +1,90 @@
+body {
+  positino: relative;
+  background-color: #DDD;
+}
+.all-comparisons {
+  position: relative;
+  margin-left: 40px;
+  margin-top: 40px;
+}
+.backdrop {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #333;
+}
+.backdrop.is-viewing {
+  display: block;
+  opacity: 0.85;
+  z-index: 30;
+}
+.comparison {
+  position: relative;
+  display: inline-block;
+  width: 400px;
+  height: 150px;
+  margin: 15px;
+  overflow: hidden;
+  z-index: 0;
+  padding-top: 25px;
+  cursor: pointer;
+}
+.comparison .img1 {
+  position: absolute;
+  left: 0px;
+  top: 25px;
+  width: 100%;
+  height: auto;
+}
+.comparison .img2 {
+  position: absolute;
+  left: 0px;
+  top: 25px;
+  width: 100%;
+  height: auto;
+}
+.comparison .img-diff {
+  position: absolute;
+  left: 0px;
+  top: 25px;
+  width: 100%;
+  height: auto;
+}
+.comparison .description {
+  position: absolute;
+  top: 0;
+}
+.comparison.being-viewed {
+  position: absolute;
+  left: 0px;
+  height: auto;
+  width: 100%;
+  padding: 30px;
+  padding-top: 80px;
+  z-index: 100;
+  overflow: visible;
+  background-color: #CCC;
+}
+.comparison.being-viewed .img1 {
+  position: relative;
+  display: inline-block;
+  width: 30%;
+}
+.comparison.being-viewed .img2 {
+  position: relative;
+  display: inline-block;
+  width: 30%;
+}
+.comparison.being-viewed .img-diff {
+  position: relative;
+  display: inline-block;
+  width: 30%;
+}
+.comparison.being-viewed .description {
+  position: absolute;
+  top: 25px;
+  font-size: 30px;
+}

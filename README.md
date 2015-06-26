@@ -6,6 +6,8 @@ This allows you to quickly see the differences in how your website looks locally
 
 This code was written in a weekend and hasn't been fully transformed into a usable library.  At the moment it uses http://mechanical-elephant.com as an example.
 
+The example in the example folder is comparing a dev version of mechanical-elephant and the live version.  I moved the elephant slightly so that a change can be see.
+
 
 # Installation
 Clone this repository locally.
@@ -37,9 +39,6 @@ selfieConfig = SelfieConfig {
           , saveDir = "siteshots"
           , webDriverConfigs = [ NamedWDConfig { configName="Firefox"
                                                , driverConfig=ffWDConfig
-                                               }
-                               , NamedWDConfig { configName="Chrome"
-                                               , driverConfig=chromeWDConfig
                                                }
                                ]
          }
